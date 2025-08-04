@@ -1,0 +1,171 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Hyperlocal Delivery Dashboard</title>
+    <!-- Include Tailwind CSS for styling -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        body { font-family: 'Inter', sans-serif; }
+        /* Style for disabled buttons */
+        button:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+        }
+    </style>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+</head>
+<body class="bg-gray-100 text-gray-800">
+
+    <div class="container mx-auto p-4 md:p-8">
+        <header class="mb-8 flex justify-between items-center">
+            <div>
+                <h1 class="text-3xl font-bold text-gray-900">Delivery Dashboard</h1>
+                <p class="text-gray-600">Live view of all ongoing orders.</p>
+            </div>
+            <button id="refresh-btn" class="bg-indigo-500 hover:bg-indigo-600 text-white font-bold py-2 px-4 rounded-lg transition duration-300">
+                Refresh
+            </button>
+        </header>
+
+        <main>
+            <!-- Orders will be dynamically inserted here by JavaScript -->
+            <div id="orders-container" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                <!-- Loading message -->
+                <p id="loading-message" class="text-gray-500 col-span-full">Loading orders...</p>
+            </div>
+        </main>
+    </div>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', () => {
+            const ordersContainer = document.getElementById('orders-container');
+            const loadingMessage = document.getElementById('loading-message');
+            const refreshButton = document.getElementById('refresh-btn');
+
+            const getStatusBadge = (status) => {
+                const statuses = {
+                    'pending': 'bg-yellow-200 text-yellow-800',
+                    'preparing': 'bg-blue-200 text-blue-800',
+                    'out_for_delivery': 'bg-purple-200 text-purple-800',
+                    'delivered': 'bg-green-200 text-green-800',
+                    'cancelled': 'bg-red-200 text-red-800'
+                };
+                return statuses[status] || 'bg-gray-200 text-gray-800';
+            };
+
+            const fetchAndRenderOrders = async () => {
+                loadingMessage.style.display = 'block';
+                ordersContainer.innerHTML = '';
+                ordersContainer.appendChild(loadingMessage);
+
+                try {
+                    const response = await fetch('/api/orders');
+                    const result = await response.json();
+                    loadingMessage.style.display = 'none';
+
+                    if (result.success && result.data.length > 0) {
+                        result.data.forEach(order => {
+                            const card = document.createElement('div');
+                            card.className = 'bg-white p-6 rounded-lg shadow-md border border-gray-200 animate-fade-in';
+                            const statusBadgeClass = getStatusBadge(order.status);
+                            
+                            // We add data-order-id to the buttons to know which order they belong to
+                            card.innerHTML = `
+                                <div class="flex justify-between items-center mb-4">
+                                    <h2 class="text-lg font-semibold">Order #${order.order_id}</h2>
+                                    <span class="${statusBadgeClass} text-xs font-semibold mr-2 px-2.5 py-0.5 rounded-full">${order.status}</span>
+                                </div>
+                                <div class="space-y-2 text-sm text-gray-700">
+                                    <p><span class="font-semibold">Customer:</span> ${order.customer_name || 'N/A'}</p>
+                                    <p><span class="font-semibold">Store:</span> ${order.store_name || 'N/A'}</p>
+                                    <p><span class="font-semibold">Address:</span> ${order.delivery_address}</p>
+                                    <p><span class="font-semibold">Total:</span> $${parseFloat(order.total_amount).toFixed(2)}</p>
+                                </div>
+                                <div class="mt-6 flex gap-2">
+                                    <button data-order-id="${order.order_id}" class="btn-assign w-full bg-blue-500 hover:bg-blue-600 text-white font-bold py-2 px-4 rounded-lg transition duration-300">Assign</button>
+                                    <button data-order-id="${order.order_id}" data-current-status="${order.status}" class="btn-update w-full bg-green-500 hover:bg-green-600 text-white font-bold py-2 px-4 rounded-lg transition duration-300">Update</button>
+                                </div>
+                            `;
+                            ordersContainer.appendChild(card);
+                        });
+                    } else {
+                        ordersContainer.innerHTML = '<p class="text-gray-500">No orders found.</p>';
+                    }
+                } catch (error) {
+                    console.error('Failed to fetch orders:', error);
+                    loadingMessage.style.display = 'none';
+                    ordersContainer.innerHTML = '<p class="text-red-500">Failed to load orders. Check the console for details.</p>';
+                }
+            };
+
+            // --- NEW: Function to handle button clicks ---
+            ordersContainer.addEventListener('click', async (event) => {
+                const target = event.target;
+                const orderId = target.dataset.orderId;
+
+                // Handle "Assign" button click
+                if (target.classList.contains('btn-assign')) {
+                    target.disabled = true;
+                    target.textContent = 'Assigning...';
+                    try {
+                        const response = await fetch(`/api/orders/${orderId}/assign-delivery`, { method: 'POST' });
+                        const result = await response.json();
+                        if (!result.success) throw new Error(result.error);
+                        alert(`Successfully assigned order #${orderId}`);
+                    } catch (error) {
+                        alert(`Failed to assign order: ${error.message}`);
+                    } finally {
+                        fetchAndRenderOrders(); // Refresh the list
+                    }
+                }
+
+                // Handle "Update" button click
+                if (target.classList.contains('btn-update')) {
+                    const currentStatus = target.dataset.currentStatus;
+                    const statusSequence = ['pending', 'preparing', 'out_for_delivery', 'delivered'];
+                    const currentIndex = statusSequence.indexOf(currentStatus);
+                    const nextStatus = statusSequence[currentIndex + 1];
+
+                    if (!nextStatus) {
+                        alert('Order is already delivered.');
+                        return;
+                    }
+
+                    target.disabled = true;
+                    target.textContent = 'Updating...';
+                    try {
+                        const response = await fetch(`/api/orders/${orderId}/status`, {
+                            method: 'PATCH',
+                            headers: { 'Content-Type': 'application/json' },
+                            body: JSON.stringify({ status: nextStatus })
+                        });
+                        const result = await response.json();
+                        if (!result.success) throw new Error(result.error);
+                        alert(`Order #${orderId} status updated to ${nextStatus}`);
+                    } catch (error) {
+                        alert(`Failed to update status: ${error.message}`);
+                    } finally {
+                        fetchAndRenderOrders(); // Refresh the list
+                    }
+                }
+            });
+
+            refreshButton.addEventListener('click', fetchAndRenderOrders);
+            fetchAndRenderOrders();
+        });
+    </script>
+    <style>
+        @keyframes fade-in {
+            from { opacity: 0; transform: translateY(10px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+        .animate-fade-in {
+            animation: fade-in 0.5s ease-out forwards;
+        }
+    </style>
+</body>
+</html>

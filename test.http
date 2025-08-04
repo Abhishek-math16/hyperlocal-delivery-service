@@ -1,0 +1,165 @@
+### Create a new order
+POST http://localhost:3000/api/orders
+Content-Type: application/json
+
+{
+  "cust_id": 1,
+  "store_id": 1,
+  "delivery_address": "123 Main St, Anytown"
+}
+
+
+### Get a specific order
+GET http://localhost:3000/api/orders/1
+
+###
+### --- Customer API ---
+###
+
+### Create a new customer
+POST http://localhost:3000/api/customers
+Content-Type: application/json
+
+{
+  "name": "Jane Doe",
+  "phone": "555-5678"
+}
+
+
+### Get the customer you just created (replace '2' with the ID you get back)
+GET http://localhost:3000/api/customers/2
+
+###
+### --- Store API ---
+###
+
+### Create a new store
+POST http://localhost:3000/api/stores
+Content-Type: application/json
+
+{
+  "name": "Super Grocer",
+  "category": "Supermarket"
+}
+
+
+### Get the store you just created (replace '2' with the ID you get back)
+GET http://localhost:3000/api/stores/2
+###
+### --- Hyperlocal Store API ---
+###
+
+### Create a new store WITH location data
+POST http://localhost:3000/api/stores
+Content-Type: application/json
+
+{
+  "name": "Fresh Foods",
+  "category": "Supermarket",
+  "location": {
+    "latitude": 12.9750,
+    "longitude": 77.6000
+  }
+}
+
+
+### Find stores nearby a specific point (within 10km)
+GET http://localhost:3000/api/stores/nearby?lat=12.9716&lon=77.5946&radius=10000
+
+###
+### --- Product API ---
+###
+
+### Add a new product to a specific store (e.g., store with ID 1)
+POST http://localhost:3000/api/stores/1/products
+Content-Type: application/json
+
+{
+  "name": "Organic Milk",
+  "price": 3.99
+}
+
+
+### Get all products from a specific store (e.g., store with ID 1)
+GET http://localhost:3000/api/stores/1/products
+
+###
+### --- Advanced Order API ---
+###
+
+### Create a new order with a list of items
+POST http://localhost:3000/api/orders
+Content-Type: application/json
+
+{
+  "cust_id": 1,
+  "store_id": 1,
+  "delivery_address": "456 Oak Ave, Anytown",
+  "items": [
+    { "product_id": 1, "quantity": 2 },
+    { "product_id": 2, "quantity": 1 }
+  ]
+}
+
+### Add a new product to a specific store (e.g., store with ID 1)
+POST http://localhost:3000/api/stores/1/products
+Content-Type: application/json
+
+{
+  "name": "Organic Milk",
+  "price": 3.99
+}
+
+###
+### --- Advanced Order API ---
+###
+
+### Create a new order with a list of items
+POST http://localhost:3000/api/orders
+Content-Type: application/json
+
+{
+  "cust_id": 1,
+  "store_id": 1,
+  "delivery_address": "456 Oak Ave, Anytown",
+  "items": [
+    { "product_id": 1, "quantity": 2 },
+    { "product_id": 2, "quantity": 1 }
+  ]
+}
+
+
+###
+### --- Delivery Personnel API ---
+###
+
+### Create a new delivery person
+POST http://localhost:3000/api/delivery
+Content-Type: application/json
+
+{
+  "name": "Mike Wheeler",
+  "phone": "555-8888",
+  "vehicle_id": "KA-01-MJ-1983"
+}
+
+
+### Update a delivery person's status and location (e.g., driver with ID 1)
+# This simulates the driver's app sending a location update when they come online.
+PUT http://localhost:3000/api/delivery/1
+Content-Type: application/json
+
+{
+  "status": "available",
+  "latitude": 12.9716,
+  "longitude": 77.5946
+}
+
+###
+### --- Delivery Assignment API ---
+###
+
+### Assign the closest available driver to an order (e.g., order with ID 1)
+# NOTE: Before running, make sure you have a delivery person with status 'available'
+# and an order that has not yet been assigned.
+POST http://localhost:3000/api/orders/1/assign-delivery
