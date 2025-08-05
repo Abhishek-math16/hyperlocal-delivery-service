@@ -3,6 +3,7 @@ Here is the README file for the "Hyperlocal Delivery Service API & Dashboard" Gi
 # Hyperlocal Delivery Service API & Dashboard
 
 This is a complete full-stack application that simulates a real-world hyperlocal delivery service. The project includes a robust backend API built with Node.js and Express, powered by a PostgreSQL database with PostGIS for advanced geospatial queries. It also features a clean, interactive frontend dashboard for visualizing and managing orders.
+<img width="1919" height="918" alt="Screenshot 2025-08-05 132517" src="https://github.com/user-attachments/assets/a2aef9c6-b059-4a98-b460-7ed382c9d3cb" />
 
 ## Key Features
 
