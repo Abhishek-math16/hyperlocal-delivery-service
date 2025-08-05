@@ -114,6 +114,9 @@ A `test.http` file is included in the repository for easy testing with the VS Co
 - `POST /api/orders/:orderId/assign-delivery`: Assign the closest available driver to an order.
 - `PATCH /api/orders/:orderId/status`: Update an order's status.
 
+## Work Flow
+<img width="1811" height="1511" alt="updatedprojecthyperdelivery" src="https://github.com/user-attachments/assets/48620885-5d70-4ca1-94c7-d14f27074d58" />
+
 ### References
 
 1. **GitHub Login (Requires Access)**
